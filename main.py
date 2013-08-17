@@ -73,7 +73,7 @@ class NewConnection(QDialog):
         if host:
             if userpass:
                 # Combine user/pass and host
-                hostname = "{userpass}@{host}"
+                hostname = "{userpass}@{host}".format(userpass=userpass, host=host)
             else:
                 # No user/pass so just use hostname
                 hostname = host
