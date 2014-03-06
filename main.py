@@ -209,7 +209,7 @@ class Viewer(QMainWindow):
 
         query = self.tables[table].select()
         if text:
-            query = query.where(' '.join((column, operator, text)))
+            query = query.where(' '.join((table+'.`'+column+'`', operator, "'"+text+"'")))
 
         print "Filtering using this query:"
         print query
