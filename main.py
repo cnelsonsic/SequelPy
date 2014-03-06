@@ -5,6 +5,13 @@ import sys
 from PySide.QtCore import *
 from PySide.QtGui import *
 
+from collections import OrderedDict
+
+OPERATIONS = OrderedDict((("=", '='),
+                          ('!=', '!='),
+                          ('>', '>'),
+                          ('<', '<'),
+                          ))
 
 class NewConnection(QDialog):
 
@@ -117,14 +124,47 @@ class Viewer(QMainWindow):
 
         self.tables = self.metadata.tables
 
+        # The list of tables
         self.tables_listing = QListWidget(self)
         self.tables_listing.addItems(self.tables.keys())
         rows.addWidget(self.tables_listing)
         self.tables_listing.itemSelectionChanged.connect(self.populate)
 
+        # The filter bar
+        self.right_column_container = QWidget()
+        self.right_column = QVBoxLayout()
+        self.right_column_container.setLayout(self.right_column)
+        rows.addWidget(self.right_column_container)
+        self.filterbar = QWidget()
+        self.right_column.addWidget(self.filterbar)
+        buttons = QHBoxLayout()
+        self.filterbar.setLayout(buttons)
+
+        # "Filter:" label
+        self.filter_label = QLabel("Filter:")
+        buttons.addWidget(self.filter_label)
+
+        # columns
+        self.filter_columns = QComboBox()
+        buttons.addWidget(self.filter_columns)
+
+        # operator
+        self.filter_operators = QComboBox()
+        self.filter_operators.addItems(OPERATIONS.keys())
+        buttons.addWidget(self.filter_operators)
+
+        # text
+        self.filter_text = QLineEdit()
+        buttons.addWidget(self.filter_text)
+
+        # filter button
+        self.filter_button = QPushButton('Filter')
+        buttons.addWidget(self.filter_button)
+
+        # The actual contents of the selected table.
         self.table = QTableWidget(self)
         self.table.horizontalHeader().setVisible(True)
-        rows.addWidget(self.table)
+        self.right_column.addWidget(self.table)
 
     def populate(self):
         table = self.tables_listing.selectedItems()[0].text()
@@ -135,6 +175,8 @@ class Viewer(QMainWindow):
         self.table.setColumnCount(len(columns))
         self.table.setRowCount(30 if len(rows) > 30 else len(rows))
         self.table.setHorizontalHeaderLabels(columns)
+
+        self.filter_columns.addItems(columns)
 
         r = 0
         for row in rows:
