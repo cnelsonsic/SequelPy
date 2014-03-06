@@ -159,6 +159,7 @@ class Viewer(QMainWindow):
 
         # filter button
         self.filter_button = QPushButton('Filter')
+        self.filter_button.clicked.connect(self.filter)
         buttons.addWidget(self.filter_button)
 
         # The actual contents of the selected table.
@@ -166,16 +167,17 @@ class Viewer(QMainWindow):
         self.table.horizontalHeader().setVisible(True)
         self.right_column.addWidget(self.table)
 
-    def populate(self):
-        table = self.tables_listing.selectedItems()[0].text()
+    def _populate(self, query):
+        table = self.get_table()
         columns = self.tables[table].columns.keys()
-        rows = self.engine.execute(self.tables[table].select()).fetchall()
+        rows = self.engine.execute(query).fetchall()
 
         self.table.clear()
         self.table.setColumnCount(len(columns))
         self.table.setRowCount(30 if len(rows) > 30 else len(rows))
         self.table.setHorizontalHeaderLabels(columns)
 
+        self.filter_columns.clear()
         self.filter_columns.addItems(columns)
 
         r = 0
@@ -183,6 +185,36 @@ class Viewer(QMainWindow):
             for i, column in enumerate(row):
                 self.table.setItem(r, i, QTableWidgetItem(str(column)))
             r += 1
+
+    def get_table(self):
+        try:
+            return self.tables_listing.selectedItems()[0].text()
+        except IndexError:
+            print "No table selected."
+            return None
+
+    def populate(self):
+        table = self.get_table()
+        return self._populate(self.tables[table].select())
+
+    def filter(self):
+        table = self.get_table()
+        if not table:
+            print "Nothing to filter."
+            return
+
+        column = self.filter_columns.currentText()
+        operator = OPERATIONS[self.filter_operators.currentText()]
+        text = self.filter_text.text()
+
+        query = self.tables[table].select()
+        if text:
+            query = query.where(' '.join((column, operator, text)))
+
+        print "Filtering using this query:"
+        print query
+
+        self._populate(query)
 
 
 def main():
